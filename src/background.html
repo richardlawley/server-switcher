@@ -1,0 +1,77 @@
+<html>
+<head>
+	<script type="text/javascript">
+
+	function get_profiles()
+	{
+		var profiles = localStorage["SwitcherProfiles"];
+		if (profiles)
+			return JSON.parse(profiles);
+		else
+			return [];
+	}
+
+	function GetUrlSwitcherInfo(url)
+	{
+		var profiles = get_profiles();
+
+		// We don't care about anything not running on http/https/file
+		if ((url.indexOf("http://") == 0 || url.indexOf("https://") == 0) || url.indexOf("file://"))
+		{
+			for (var i in profiles)
+			{
+				var profile = profiles[i];
+
+				if (url.indexOf(profile.live) == 0)
+				{
+					return {
+						serverType: "live",
+						alternateUrl: profile.dev + url.substring(profile.live.length)
+					};
+				}
+				else if (url.indexOf(profile.dev) == 0)
+				{
+					return {
+						serverType: "dev",
+						alternateUrl: profile.live + url.substring(profile.dev.length)
+					};
+				}
+			}
+		}
+
+		return false;
+	}
+
+	function checkForValidUrl(tabId, changeInfo, tab)
+	{
+		var info = GetUrlSwitcherInfo(tab.url);
+		if (!info)
+			return;
+
+		if (info.serverType == "live")
+		{
+			chrome.pageAction.setIcon({ path: "liveserver.png", tabId: tab.id });
+			chrome.pageAction.setTitle({ title: "Live Server - click to switch to development", tabId: tab.id });
+			chrome.pageAction.show(tabId);
+		}
+		else if (info.serverType == "dev")
+		{
+			chrome.pageAction.setIcon({ path: "devserver.png", tabId: tab.id });
+			chrome.pageAction.setTitle({ title: "Development Server - click to switch to live", tabId: tab.id });
+			chrome.pageAction.show(tabId);
+		}
+	}
+
+	function clickHandler (tab)
+	{
+		var info = GetUrlSwitcherInfo(tab.url);
+		chrome.tabs.update(tab.id, { url: info.alternateUrl });
+	}
+
+	// Register our handlers
+	chrome.tabs.onUpdated.addListener(checkForValidUrl);
+	chrome.pageAction.onClicked.addListener(clickHandler);
+
+	</script>
+</head>
+</html>

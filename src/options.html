@@ -1,0 +1,245 @@
+<html>
+<head>
+	<title>Server Switcher for Chrome Options</title>
+	<script type="text/javascript" src="jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="jquery.template.js"></script>
+	<script type="text/javascript" src="jquery.validate.js"></script>
+	<script type="text/javascript">
+
+		/**
+		 * Function : dump()
+		 * Arguments: The data - array,hash(associative array),object
+		 *    The level - OPTIONAL
+		 * Returns  : The textual representation of the array.
+		 * This function was inspired by the print_r function of PHP.
+		 * This will accept some data as the argument and return a
+		 * text that will be a more readable version of the
+		 * array/hash/object that is given.
+		 * Docs: http://www.openjs.com/scripts/others/dump_function_php_print_r.php
+		 */
+		function dump(arr,level) {
+			var dumped_text = "";
+			if(!level) level = 0;
+
+			//The padding given at the beginning of the line.
+			var level_padding = "";
+			for(var j=0;j<level+1;j++) level_padding += "    ";
+
+			if(typeof(arr) == 'object') { //Array/Hashes/Objects
+				for(var item in arr) {
+					var value = arr[item];
+
+					if(typeof(value) == 'object') { //If it is an array,
+						dumped_text += level_padding + "'" + item + "' ...\n";
+						dumped_text += dump(value,level+1);
+					} else {
+						dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+					}
+				}
+			} else { //Stings/Chars/Numbers etc.
+				dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+			}
+			return dumped_text;
+		}
+
+		function get_profiles()
+		{
+			var profiles = localStorage["SwitcherProfiles"];
+			if (profiles)
+				return JSON.parse(profiles);
+			else
+				return [];
+		}
+
+		/// <summary>
+		/// Loads the current options from localStorage
+		/// </summary>
+		function load_options() {
+
+			var profiles = get_profiles();
+
+			var t = $.template('<tr><td rowspan="2">${name}</td><td>Live:</td><td>${live}</td><td rowspan="2"><button onclick="deleteProfile(${index})">Del</button></td></tr><tr><td>Dev:</td><td>${dev}</td></tr>');
+			for (var i in profiles)
+			{
+				var profile = profiles[i];
+				profile.index = i;
+				$('#profilesrows').append(t, profile);
+			}
+		}
+
+		function deleteProfile(index)
+		{
+			var profiles = get_profiles();
+			if (profiles.length > index)
+			{
+				profiles.splice(index, 1);
+				localStorage["SwitcherProfiles"] = JSON.stringify(profiles);
+			}
+
+			document.location.reload();
+		}
+
+		function addProfile()
+		{
+			if (!$("#profileform").valid())
+				return;
+
+			var profiles = get_profiles();
+
+			var newprofile = {
+				name: document.getElementById("newprofilename").value,
+				live: document.getElementById("newliveserver").value,
+				dev: document.getElementById("newdevserver").value
+			};
+
+			if (!profiles)
+				profiles = [newprofile];
+			else
+				profiles.push(newprofile);
+
+			localStorage["SwitcherProfiles"] = JSON.stringify(profiles);
+
+			document.location.reload();
+		}
+
+		$(document).ready(function(){
+			$("#profileform").validate();
+		  });
+
+	</script>
+
+	<style type="text/css">
+
+		body {
+		  font-family:helvetica, arial, sans-serif;
+		  font-size:80%;
+		  margin:10px;
+		}
+
+		#header {
+		  padding-bottom:1.5em;
+		  padding-top:1.5em;
+		}
+
+		#header h1 {
+		  font-size: 156%;
+		  display:inline;
+		  padding-bottom:43px;
+		  padding-left:75px;
+		  padding-top:40px;
+		  background:url(icon_128.png) no-repeat;
+		  background-size:67px;
+		  background-position:1px 18px;
+		}
+
+		.section-header {
+		  background:#ebeff9;
+		  border-top:1px solid #b5c7de;
+		  font-size:99%;
+		  padding:3px 0 2px 5px;
+		  font-weight:bold;
+		  margin-bottom:1em;
+		  margin-top:4em;
+		}
+
+		.section-header.first {
+		  margin-top:1em;
+		}
+
+		#custom-domain {
+		  width:300px;
+		  margin-left:2px;
+		}
+
+		#footer {
+		  margin-top:4em;
+		}
+
+		input.txtServer {
+			width: 300px;
+			background-color: #EEE;
+		}
+
+		table {
+			border: none;
+		}
+		#profilelist td, #profilelist th {
+			border: solid 1px #EEE;
+		}
+
+		input.error {
+			border: 2px solid red;
+			background-color: #FFFFD5
+		}
+
+		label {
+			width: 100px;
+			text-align: right;
+		}
+
+	</style>
+
+</head>
+
+
+<body onload="load_options()">
+
+	<div id="header"><h1>Server Switcher Options</h1></div>
+
+	<div id="info">
+		<p>Server Switcher for Chrome is a port of the Firefox addon
+		<a href="http://hermann.czedik.net/projekte/switcher/">Server Switcher</a>, originally by
+		Hermann Czedik-Eysenberg.  I used this addon in Firefox for months before switching to
+		Chrome and finding nothing similar, so I wrote a version for Chrome</p>
+
+		<p>Server Switcher allows you to set up a profile for a website you are developing so
+		you can run a development version and a production version.  Whenever you view a page
+		from a site you have set up, an icon will appear on the right of the address bar showing
+		which server you are on.  Click the icon and you'll be taken to the equivalent page on
+		the other version of the website.</p>
+	</div>
+
+	<div id="status"></div>
+
+	<div class="section-header first">Server Profiles</div>
+
+	<form id="profileform" action="" method="">
+		<table border="1" cellspacing="0" cellpadding="2" id="profilelist">
+			<thead>
+				<th>Profile Name</th>
+				<th colspan="2">Servers</th>
+				<th>&nbsp;</th>
+			</thead>
+			<tbody id="profilesrows">
+			</tbody>
+		</table>
+
+		<br /><br />
+
+		<div><strong>Add Profile</strong></div>
+
+		<table border="0" cellpadding="2">
+		<tr>
+			<td class="lbl"><label for="newprofilename">Name:</label></td>
+			<td><input class="required" size="10" maxlength="30" id="newprofilename" name="newprofilename" /></td>
+		</tr>
+		<tr>
+			<td class="lbl"><label for="newliveserver">Live:</label></td>
+			<td><input type="text" class="required url" size="50" id="newliveserver" name="newliveserver" /></td>
+		</div>
+
+		</tr>
+		<tr>
+			<td class="lbl"><label for="newdevserver">Dev:</label></td>
+			<td><input type="text" class="required url" size="50" id="newdevserver" name="newdevserver" /></td>
+		</tr>
+		<tr>
+			<td>&nbsp;</td>
+			<td><button onclick="addProfile()">Add Profile</button></td>
+		</tr>
+		</table>
+
+	</form>
+</body>
+
+</html>
