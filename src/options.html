@@ -1,112 +1,10 @@
 <html>
 <head>
 	<title>Server Switcher for Chrome Options</title>
-	<script type="text/javascript" src="jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="jquery-2.0.2.min.js"></script>
 	<script type="text/javascript" src="jquery.template.js"></script>
 	<script type="text/javascript" src="jquery.validate.js"></script>
-	<script type="text/javascript">
-
-		/**
-		 * Function : dump()
-		 * Arguments: The data - array,hash(associative array),object
-		 *    The level - OPTIONAL
-		 * Returns  : The textual representation of the array.
-		 * This function was inspired by the print_r function of PHP.
-		 * This will accept some data as the argument and return a
-		 * text that will be a more readable version of the
-		 * array/hash/object that is given.
-		 * Docs: http://www.openjs.com/scripts/others/dump_function_php_print_r.php
-		 */
-		function dump(arr,level) {
-			var dumped_text = "";
-			if(!level) level = 0;
-
-			//The padding given at the beginning of the line.
-			var level_padding = "";
-			for(var j=0;j<level+1;j++) level_padding += "    ";
-
-			if(typeof(arr) == 'object') { //Array/Hashes/Objects
-				for(var item in arr) {
-					var value = arr[item];
-
-					if(typeof(value) == 'object') { //If it is an array,
-						dumped_text += level_padding + "'" + item + "' ...\n";
-						dumped_text += dump(value,level+1);
-					} else {
-						dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
-					}
-				}
-			} else { //Stings/Chars/Numbers etc.
-				dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
-			}
-			return dumped_text;
-		}
-
-		function get_profiles()
-		{
-			var profiles = localStorage["SwitcherProfiles"];
-			if (profiles)
-				return JSON.parse(profiles);
-			else
-				return [];
-		}
-
-		/// <summary>
-		/// Loads the current options from localStorage
-		/// </summary>
-		function load_options() {
-
-			var profiles = get_profiles();
-
-			var t = $.template('<tr><td rowspan="2">${name}</td><td>Live:</td><td>${live}</td><td rowspan="2"><button onclick="deleteProfile(${index})">Del</button></td></tr><tr><td>Dev:</td><td>${dev}</td></tr>');
-			for (var i in profiles)
-			{
-				var profile = profiles[i];
-				profile.index = i;
-				$('#profilesrows').append(t, profile);
-			}
-		}
-
-		function deleteProfile(index)
-		{
-			var profiles = get_profiles();
-			if (profiles.length > index)
-			{
-				profiles.splice(index, 1);
-				localStorage["SwitcherProfiles"] = JSON.stringify(profiles);
-			}
-
-			document.location.reload();
-		}
-
-		function addProfile()
-		{
-			if (!$("#profileform").valid())
-				return;
-
-			var profiles = get_profiles();
-
-			var newprofile = {
-				name: document.getElementById("newprofilename").value,
-				live: document.getElementById("newliveserver").value,
-				dev: document.getElementById("newdevserver").value
-			};
-
-			if (!profiles)
-				profiles = [newprofile];
-			else
-				profiles.push(newprofile);
-
-			localStorage["SwitcherProfiles"] = JSON.stringify(profiles);
-
-			document.location.reload();
-		}
-
-		$(document).ready(function(){
-			$("#profileform").validate();
-		  });
-
-	</script>
+	<script type="text/javascript" src="options.js"></script>
 
 	<style type="text/css">
 
@@ -182,7 +80,7 @@
 </head>
 
 
-<body onload="load_options()">
+<body>
 
 	<div id="header"><h1>Server Switcher Options</h1></div>
 
@@ -235,7 +133,7 @@
 		</tr>
 		<tr>
 			<td>&nbsp;</td>
-			<td><button onclick="addProfile()">Add Profile</button></td>
+			<td><button id="btnAddProfile">Add Profile</button></td>
 		</tr>
 		</table>
 
